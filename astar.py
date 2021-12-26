@@ -3,7 +3,8 @@ import numpy as np
 from settings import *
 
 def distance(a, b):
-    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+    # return abs(a[0] - b[0]) + abs(a[1] - b[1])
+    return np.sum(np.abs(a - b))
 
 # Node:
 # G cost - distance from the start
@@ -34,8 +35,8 @@ class astar:
         self.target = 0
 
     def settargets(self, src, dst):
-        self.source = src
-        self.target = dst
+        self.source = np.array(src)
+        self.target = np.array(dst)
 
     
     def block(self, x, y):
@@ -57,21 +58,21 @@ class astar:
         self.board[self.target[0], self.target[1], 0] = T_NONE
 
         # Add starting node to open list
-        self.board[self.source[0], self.source[1]] = [T_OPEN, 0, distance(self.source, self.target), distance(self.source, self.target), 0]
+        d = distance(self.source, self.target)
+        self.board[self.source[0], self.source[1]] = [T_OPEN, 0, d, d, 0]
 
         # Loop
         while True:
             # Sort by F-cost
             openi = np.argwhere(self.board[:, :, 0] == T_OPEN)
             
+            # Take the smallest, move it to closed
             if not rev:
-                # Take the smallest, move it to closed
-                minvalarg = np.argmin(self.board[openi[:,0], openi[:,1], 3])#[0]
+                minvalarg = np.argmin(self.board[openi[:,0], openi[:,1], 3])
             else:
-                minvalarg = np.argmax(self.board[openi[:,0], openi[:,1], 3])#[0]
+                minvalarg = np.argmax(self.board[openi[:,0], openi[:,1], 3])
 
             current = self.board[openi[minvalarg][0], openi[minvalarg][1]]
-            # current[0] = T_CLOS
             current[0] = T_CLOS
 
             # If it is the target node
@@ -81,18 +82,15 @@ class astar:
             # If not, go through neighbours
             for i, e in enumerate(((1,0), (0,1), (-1,0), (0,-1))):
                 neighbour = openi[minvalarg] + e
+                # nn = self.board[neighbour[0], neighbour[1]]
 
+                # Out of bounds
                 if neighbour[0] < 0 or neighbour[0] >= SIZEX or neighbour[1] < 0 or neighbour[1] >= SIZEY:
-                    # out of bounds
-                    continue
-                if self.board[neighbour[0], neighbour[1], 0] == T_STOP or self.board[neighbour[0], neighbour[1], 0] == T_CLOS:
-                    # not traversible
                     continue
 
-                # If neighbour is not in open, add it
-                if self.board[neighbour[0], neighbour[1], 0] != T_OPEN:
-                    self.board[neighbour[0], neighbour[1]] = [T_OPEN, current[1] + 1, distance(neighbour, self.target), 0, i]
-                    self.board[neighbour[0], neighbour[1], 3] = self.board[neighbour[0], neighbour[1], 1] + self.board[neighbour[0], neighbour[1], 2]
+                # Not traversible
+                if self.board[neighbour[0], neighbour[1], 0] == T_STOP or self.board[neighbour[0], neighbour[1], 0] == T_CLOS:
+                    continue
 
                 # G cost - to start (parent + 1)
                 gc = current[1] + 1
@@ -100,19 +98,17 @@ class astar:
                 # H cost - to end
                 hc = distance(neighbour, self.target)
 
+                # If neighbour is not in open, add it
+                if self.board[neighbour[0], neighbour[1], 0] != T_OPEN:
+                    self.board[neighbour[0], neighbour[1]] = [T_OPEN, gc, hc, gc + hc, i]
+
                 # Update
                 if not rev:
-                    if gc + hc <= self.board[neighbour[0], neighbour[1], 3]:
-                        self.board[neighbour[0], neighbour[1], 1] = gc
-                        self.board[neighbour[0], neighbour[1], 2] = hc
-                        self.board[neighbour[0], neighbour[1], 3] = gc + hc
-                        self.board[neighbour[0], neighbour[1], 4] = i
+                    if gc + hc < self.board[neighbour[0], neighbour[1], 3]:
+                        self.board[neighbour[0], neighbour[1], 1:5] = [gc, hc, gc + hc, i]
                 else:
-                    if gc + hc >= self.board[neighbour[0], neighbour[1], 3]:
-                        self.board[neighbour[0], neighbour[1], 1] = gc
-                        self.board[neighbour[0], neighbour[1], 2] = hc
-                        self.board[neighbour[0], neighbour[1], 3] = gc + hc
-                        self.board[neighbour[0], neighbour[1], 4] = i
+                    if gc + hc > self.board[neighbour[0], neighbour[1], 3]:
+                        self.board[neighbour[0], neighbour[1], 1:5] = [gc, hc, gc + hc, i]
 
 
     def getpath(self):

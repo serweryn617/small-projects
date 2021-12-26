@@ -4,7 +4,7 @@ from settings import SIZEX, SIZEY
 import astar
 import time
 
-DRAW = True
+DRAW = False
 
 # def distance(a, b):
 #     return abs(a[0] - b[0]) + abs(a[1] - b[1])
@@ -20,12 +20,14 @@ ast = astar.astar(SIZEX, SIZEY)
 
 start_time = time.time()
 timer = 0
+prevscore = snk.len
+
 while snk.run:
     # Snake
     snk.events()
     snk.loop()
     if DRAW:
-        snk.delay(30)
+        # snk.delay(30)
         snk.display()
 
     # Algorithms:
@@ -155,6 +157,10 @@ while snk.run:
     
     if DRAW:
         snk.disp_update()
+    else:
+        if prevscore != snk.len:
+            print('Score:', snk.len)
+        
 
 print('Time:', time.time() - start_time)
 
