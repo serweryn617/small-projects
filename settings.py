@@ -1,17 +1,17 @@
 # Settings file for Snake.py
 
 # Square size in pixels
-GRID = 24
+GRID = 32
 
 # Game area
-SIZEX = 30
-SIZEY = 30
+SIZEX = 16
+SIZEY = 16
 
 # Background color
 BG_COL = 0x99cc33
 
 # Starting snake length
-ST_LEN = 3
+ST_LEN = 2
 
 # Files
 SHEET_FILE = 'snakew.png'

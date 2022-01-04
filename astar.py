@@ -4,7 +4,7 @@ from settings import *
 
 def distance(a, b):
     # return abs(a[0] - b[0]) + abs(a[1] - b[1])
-    return np.sum(np.abs(a - b))
+    return np.sum(np.abs(a - b)) * 10
 
 # Node:
 # G cost - distance from the start
@@ -65,6 +65,9 @@ class astar:
         while True:
             # Sort by F-cost
             openi = np.argwhere(self.board[:, :, 0] == T_OPEN)
+            if openi.size == 0:
+                # Path not found
+                return False
             
             # Take the smallest, move it to closed
             if not rev:
@@ -76,24 +79,25 @@ class astar:
             current[0] = T_CLOS
 
             # If it is the target node
+            # If the head is close to tail, the snake might get caught in a loop!
             if openi[minvalarg][0] == self.target[0] and openi[minvalarg][1] == self.target[1]:
-                break
+                return True
 
             # If not, go through neighbours
             for i, e in enumerate(((1,0), (0,1), (-1,0), (0,-1))):
                 neighbour = openi[minvalarg] + e
                 # nn = self.board[neighbour[0], neighbour[1]]
 
-                # Out of bounds
+                # Out of bounds (has to be first)
                 if neighbour[0] < 0 or neighbour[0] >= SIZEX or neighbour[1] < 0 or neighbour[1] >= SIZEY:
                     continue
 
                 # Not traversible
-                if self.board[neighbour[0], neighbour[1], 0] == T_STOP or self.board[neighbour[0], neighbour[1], 0] == T_CLOS:
+                if self.board[neighbour[0], neighbour[1], 0] == T_CLOS or self.board[neighbour[0], neighbour[1], 0] == T_STOP:
                     continue
 
-                # G cost - to start (parent + 1)
-                gc = current[1] + 1
+                # G cost - to start
+                gc = current[1] + 7 # Positions further away (closer to target) are more valuable
 
                 # H cost - to end
                 hc = distance(neighbour, self.target)
@@ -104,7 +108,7 @@ class astar:
 
                 # Update
                 if not rev:
-                    if gc + hc < self.board[neighbour[0], neighbour[1], 3]:
+                    if gc < self.board[neighbour[0], neighbour[1], 1]:
                         self.board[neighbour[0], neighbour[1], 1:5] = [gc, hc, gc + hc, i]
                 else:
                     if gc + hc > self.board[neighbour[0], neighbour[1], 3]:

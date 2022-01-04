@@ -4,10 +4,8 @@ from settings import SIZEX, SIZEY
 import astar
 import time
 
-DRAW = False
-
-# def distance(a, b):
-#     return abs(a[0] - b[0]) + abs(a[1] - b[1])
+DRAW = True
+DRAW_LINES = True
 
 snk = Snake.Snake()
 
@@ -27,17 +25,15 @@ while snk.run:
     snk.events()
     snk.loop()
     if DRAW:
-        # snk.delay(30)
+        snk.delay(60)
         snk.display()
-
-    # Algorithms:
 
     # Modes:
     #   0 - Head, tail
     #   1 - tail, head
     #   2 - weird?
     #   3 - random
-    mode = 0 if snk.len < (SIZEX * SIZEY * 0.8) else 2
+    mode = 0 #if snk.len < (SIZEX * SIZEY * 0.7) else 2
 
     # Parameters
     x = snk.xpos
@@ -46,41 +42,36 @@ while snk.run:
 
     # Mode 1: Head, Tail
     if mode == 0:
-        try:
-            ast.settargets((x[-1], y[-1]), target) # Head -> Food
-            ast.block(x, y) # Block snake
-            ast.cal()
-
+        ast.settargets((x[-1], y[-1]), target) # Head -> Food
+        ast.block(x, y) # Block snake
+        if ast.cal():
+            # Draw open and closed cells from A*
             # for c in ast.getclosed():
             #     snk.draw_cell(c[0:2], (255, 0, 0, 60))
             # for c in ast.getopen():
             #     snk.draw_cell(c[0:2], (0, 0, 255, 60))
 
             path = ast.getpath()
-            if DRAW:
+            if DRAW and DRAW_LINES:
                 for i in range(len(path) - 1):
                     snk.draw_line(path[i], path[i + 1], (255,0,255))
 
             ast.clear()
-        except:
+        else:
             # print('Error: Mode 0: Path to Head not found')
             mode = 2 # Straight to mode 2, blocking path to tail won't make it better
     
     if mode == 0:
-        try:
-            ast.settargets((x[0], y[0]), target) # Tail -> Food
-            ast.block(x, y) # Block snake
-            ast.blockl(path[1:]) # Block path to head
-            ast.cal()
-            
+        ast.settargets((x[0], y[0]), target) # Tail -> Food
+        ast.block(x, y) # Block snake
+        ast.blockl(path[1:]) # Block path to head
+        if ast.cal():
             pathtail = ast.getpath()
-            if DRAW:
+            if DRAW and DRAW_LINES:
                 for i in range(len(pathtail) - 1):
                     snk.draw_line(pathtail[i], pathtail[i + 1], (255,255,255))
-
             ast.clear()
-
-        except:
+        else:
             # print('Error: Mode 0: Path to Tail not found')
             mode = 1
     
@@ -88,37 +79,29 @@ while snk.run:
     # Path to tail is more important
     if mode == 1:
         ast.clear()
-        try:
-            ast.settargets((x[0], y[0]), target) # Tail -> Food
-            ast.block(x, y) # Block snake
-            # Don't block this path
-            ast.cal()
-            
+        ast.settargets((x[0], y[0]), target) # Tail -> Food
+        ast.block(x, y) # Block snake
+        # Don't block this path
+        if ast.cal():
             pathtail = ast.getpath()
-            if DRAW:
+            if DRAW and DRAW_LINES:
                 for i in range(len(pathtail) - 1):
                     snk.draw_line(pathtail[i], pathtail[i + 1], (255,255,255))
-
             ast.clear()
-
-        except:
+        else:
             # print('Error: Mode 1: Path to Tail not found') # Tail has no connection
             mode = 2
 
-        try:
-            ast.settargets((x[-1], y[-1]), target) # Head -> Food
-            ast.block(x, y) # Block snake
-            ast.blockl(pathtail[1:]) # Block path to tail
-            ast.cal()
-            
+        ast.settargets((x[-1], y[-1]), target) # Head -> Food
+        ast.block(x, y) # Block snake
+        ast.blockl(pathtail[1:]) # Block path to tail
+        if ast.cal():
             path = ast.getpath()
-            if DRAW:
+            if DRAW and DRAW_LINES:
                 for i in range(len(path) - 1):
                     snk.draw_line(path[i], path[i + 1], (255,255,255))
-
             ast.clear()
-
-        except:
+        else:
             # print('Error: Mode 1: Path to Head not found')
             mode = 2
 
@@ -127,18 +110,15 @@ while snk.run:
     if mode == 2:
         # print('Initializing WEIRD?™ mode')
         ast.clear()
-        try:
-            ast.settargets((x[-1], y[-1]), [x[0], y[0]]) # Head to tail
-            ast.block(x, y) # Block snake
-            ast.cal(True)
-            
+        ast.settargets((x[-1], y[-1]), [x[0], y[0]]) # Head to tail
+        ast.block(x, y) # Block snake
+        if ast.cal(True):
             path = ast.getpath()
-            if DRAW:
+            if DRAW and DRAW_LINES:
                 for i in range(len(path) - 1):
                     snk.draw_line(path[i], path[i + 1], (255,0,0))
-
             ast.clear()
-        except:
+        else:
             break
 
     ast.clear()
