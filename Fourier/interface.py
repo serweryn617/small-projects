@@ -12,15 +12,17 @@ INPUT_RECT = 50, 50, 700, 700
 PLOT_X = 800, 50, 650, 200
 PLOT_Y = 800, 300, 650, 200
 START = 800, 550, 100, 100
+CLEAR = 950, 550, 100, 100
+UNDO = 1100, 550, 100, 100
 
 # Animation time
 ANIM_TIME = 360 # frames
 
 # Number of Fourier coefficients to calculate
-COEFFICIENTS = 10
+COEFFICIENTS = 30
 
 
-def to_screen_pos(pos):
+def to_math_pos(pos):
     x = pos[0] + INPUT_RECT[0] + INPUT_RECT[2] / 2
     y = -pos[1] + INPUT_RECT[1] + INPUT_RECT[3] / 2
     return x, y
@@ -28,18 +30,17 @@ def to_screen_pos(pos):
 
 recdata = []
 def reconstruct(a, b, a2, b2, frame, r=0, pos=(0,0)):
-    # pygame.draw.circle(win, (255,0,0), to_screen_pos(pos), abs(b[r]), 1)
     endpos = [
         pos[0] + np.cos(2*np.pi*(r+1)*frame/ANIM_TIME)*a[r] + np.sin(2*np.pi*(r+1)*frame/ANIM_TIME)*b[r],
         pos[1]
     ]
-    pygame.draw.line(win, (0,0,255), to_screen_pos(pos), to_screen_pos(endpos))
+    pygame.draw.line(win, (0,0,255), to_math_pos(pos), to_math_pos(endpos))
     
     endpos2 = [
         endpos[0],
         endpos[1] + np.cos(2*np.pi*(r+1)*frame/ANIM_TIME)*a2[r] + np.sin(2*np.pi*(r+1)*frame/ANIM_TIME)*b2[r]
     ]
-    pygame.draw.line(win, (0,0,255), to_screen_pos(endpos), to_screen_pos(endpos2))
+    pygame.draw.line(win, (0,0,255), to_math_pos(endpos), to_math_pos(endpos2))
 
     r += 1
     if r < len(a):
@@ -92,6 +93,18 @@ while run:
                 recdata = []
                 anim = True
 
+            # Inside clear button
+            if CLEAR[0] < event.pos[0] < CLEAR[0] + CLEAR[2] and CLEAR[1] < event.pos[1] < CLEAR[1] + CLEAR[3]:
+                if datax == []:
+                    recdata = []
+                datax = []
+                datay = []
+
+            # Inside undo button
+            if UNDO[0] < event.pos[0] < UNDO[0] + UNDO[2] and UNDO[1] < event.pos[1] < UNDO[1] + UNDO[3]:
+                datax.pop()
+                datay.pop()
+
         # LMB up
         if event.type == pygame.MOUSEBUTTONUP and event.button == pygame.BUTTON_LEFT:
             capture_pos = False
@@ -115,6 +128,12 @@ while run:
     # Plotting
     # ====================================================================================================
 
+    # input rectangle
+    mid = INPUT_RECT[0] + INPUT_RECT[2] / 2, INPUT_RECT[1] + INPUT_RECT[3] / 2
+    pygame.draw.line(win, (120,120,120), (INPUT_RECT[0], mid[1]), (INPUT_RECT[0] + INPUT_RECT[2], mid[1]))
+    pygame.draw.line(win, (120,120,120), (mid[0], INPUT_RECT[1]), (mid[0], INPUT_RECT[1] + INPUT_RECT[3]))
+    pygame.draw.rect(win, (255,255,255), pygame.Rect(INPUT_RECT), 1)
+
     # x plot
     midplotx = PLOT_X[1] + PLOT_X[3] / 2
     pygame.draw.line(win, (120,120,120), (PLOT_X[0], midplotx), (PLOT_X[0] + PLOT_X[2], midplotx))
@@ -125,15 +144,13 @@ while run:
     pygame.draw.line(win, (120,120,120), (PLOT_Y[0], midploty), (PLOT_Y[0] + PLOT_Y[2], midploty))
     pygame.draw.rect(win, (255,255,255), pygame.Rect(PLOT_Y), 1)
 
-    # input rectangle
-    mid = INPUT_RECT[0] + INPUT_RECT[2] / 2, INPUT_RECT[1] + INPUT_RECT[3] / 2
-    pygame.draw.line(win, (120,120,120), (INPUT_RECT[0], mid[1]), (INPUT_RECT[0] + INPUT_RECT[2], mid[1]))
-    pygame.draw.line(win, (120,120,120), (mid[0], INPUT_RECT[1]), (mid[0], INPUT_RECT[1] + INPUT_RECT[3]))
-    pygame.draw.rect(win, (255,255,255), pygame.Rect(INPUT_RECT), 1)
-
     # display current data
     prevxposx = PLOT_X[0]
     prevxposy = PLOT_Y[0]
+    
+    if len(datax) >= 1:
+        pygame.draw.circle(win, (255,255,0), to_math_pos((datax[0], datay[0])), 3)
+
     for p in range(1, len(datax)):
         # draw lines inside input rect
         pygame.draw.line(
@@ -171,6 +188,12 @@ while run:
 
     # start button
     pygame.draw.rect(win, (0,200,0), pygame.Rect(START))
+    
+    # clear button
+    pygame.draw.rect(win, (200,0,0), pygame.Rect(CLEAR))
+    
+    # undo button
+    pygame.draw.rect(win, (200,200,0), pygame.Rect(UNDO))
 
     # ====================================================================================================
     # Display fourier animation
@@ -190,8 +213,8 @@ while run:
         pygame.draw.line(
             win,
             (255,0,0),
-            to_screen_pos((recdata[p-1][0], recdata[p-1][1])),
-            to_screen_pos((recdata[p][0], recdata[p][1]))
+            to_math_pos((recdata[p-1][0], recdata[p-1][1])),
+            to_math_pos((recdata[p][0], recdata[p][1]))
         )
 
     # ====================================================================================================
